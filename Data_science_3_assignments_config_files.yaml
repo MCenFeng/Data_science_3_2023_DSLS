@@ -1,0 +1,347 @@
+# The steps and paramenters used for each notebook file for the assignments (except for assignment 1) are here:
+
+# Assignment 2
+
+- name: TextCleaning
+  type: data_transformation
+  operations:
+    - name: RemovePunctuationAndStopwords
+      type: function
+      function:
+        name: text_cleaning
+
+- name: TokenizeAndLemmatize
+  type: data_transformation
+  operations:
+    - name: TokenizeAndLemmatize
+      type: function
+      function:
+        name: nouns
+
+- name: TfidfVectorizer
+  type: feature_extraction
+  estimator:
+    model_type: TfidfVectorizer
+    stop_words: 'english'
+    ngram_range: (1, 1)
+    max_df: 0.8
+    min_df: 0.01
+
+- name: FitAndTransformTfidf
+  type: feature_extraction
+  operations:
+    - name: FitAndTransform
+      type: sklearn_transform
+
+- name: CreateDocTermMatrix
+  type: data_transformation
+  operations:
+    - name: CreateDataFrame
+      type: create_dataframe
+      columns: 'tv_noun.get_feature_names_out()'
+      index: 'data_biomedical.index'
+
+- name: TopicModeling
+  type: topic_modeling
+  estimator:
+    model_type: NMF
+    num_topics: 5
+    top_words: 10
+
+- name: DisplayTopics
+  type: function
+  function:
+    name: display_topics
+  parameters:
+    - model: nmf_model
+    - feature_names: 'tv_noun.get_feature_names_out()'
+    - num_top_words: 10
+
+
+# Assignment 3 
+
+- name: FeatureEngineering
+    type: data_transformation
+    operations:
+      - name: AddHoursAndDaylight
+        type: function
+        function:
+          name: add_hours_and_daylight
+        parameters:
+          - X: sensor_model_df['timestamp']
+
+      - name: AddDayOfWeekAndWeekDay
+        type: function
+        function:
+          name: add_day_of_week_and_week_day
+        parameters:
+          - X: sensor_model_df['timestamp']
+
+      - name: AddTimeEpochAndCategories
+        type: function
+        function:
+          name: add_time_epoch_and_categories
+        parameters:
+          - X: sensor_model_df['timestamp']
+          - vec_y: vec_y
+          - threshold: 0.01
+
+      - name: ExtractData
+        type: select_columns
+        columns: ['sensor_51', 'hours', 'daylight', 'DayOfTheWeek', 'WeekDay']
+
+  - name: StandardizeData
+    type: data_transformation
+    operations:
+      - name: StandardScaler
+        type: sklearn_preprocessing
+        method: StandardScaler
+
+  - name: PrincipalComponentAnalysis
+    type: dimensionality_reduction
+    estimator:
+      model_type: PCA
+      n_components: 2
+
+  - name: StandardizePCAData
+    type: data_transformation
+    operations:
+      - name: StandardScaler
+        type: sklearn_preprocessing
+        method: StandardScaler
+
+  - name: KMeansClustering
+    type: clustering
+    estimator:
+      model_type: KMeans
+      n_clusters: 15
+
+  - name: GetClusterLabels
+    type: function
+    function:
+      name: get_cluster_labels
+
+  - name: AnomalyDetection
+    type: anomaly_detection
+    estimator:
+      model_type: IsolationForest
+      contamination: 0.1
+
+  - name: GetAnomalyLabels
+    type: function
+    function:
+      name: get_anomaly_labels
+
+  - name: VisualizeAnomalies
+    type: visualization
+    function:
+      name: plot_anomaly2
+
+  - name: RandomDataGeneration
+    type: synthetic_data_generation
+    operation:
+      name: generate_random_data
+    parameters:
+      - n_samples: 35000
+      - n_features: 2
+      - feature_range: [-5, 19]
+
+  - name: GammaVariation
+    type: model_evaluation
+    estimator:
+      model_type: OneClassSVM
+      kernel: rbf
+    hyperparameters:
+      gamma: [0.00005, 0.005, 0.01, 0.025, 0.05, 0.1, 0.3, 0.6, 0.9, 2, 5, 10]
+
+
+# Assignment 4 
+
+compute_cost:
+  - name: ComputeCost
+    type: function
+    function:
+      name: compute_cost
+    parameters:
+      - X: X  # Replace with your X data
+      - vec_y: vec_y  # Replace with your y data
+      - theta: theta  # Replace with your theta data
+
+gradient_descent:
+  - name: GradientDescent
+    type: function
+    function:
+      name: gradient_descent
+    parameters:
+      - X: X  # Replace with your X data
+      - vec_y: vec_y  # Replace with your y data
+      - theta: theta  # Replace with your theta data
+      - learning_rate: 0.0001  # Learning rate
+      - num_iterations: 200  # Number of iterations
+
+
+# Assignment 5
+
+- name: SupportVectorClassifier
+type: classifier
+estimator:
+  model_type: SVC
+  params:
+    C: [0.01, 0.1, 1, 10]
+    kernel: ["linear", "poly", "rbf", "sigmoid"]
+    degree: [1, 3, 5, 7]
+    gamma: [0.01, 1]
+  random_state: 101
+cross_validation:
+  method: k-fold
+  num_folds: 5
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: GridSearchCV
+type: hyperparameter_tuner
+estimator:
+  model_type: SVC
+hyperparameters:
+  param_grid:
+    C: [0.01, 0.1, 1, 10]
+    kernel: ["linear", "poly", "rbf", "sigmoid"]
+    degree: [1, 3, 5, 7]
+    gamma: [0.01, 1]
+cross_validation:
+  method: k-fold
+  num_folds: 5
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: LogisticRegressionClassifier
+type: classifier
+estimator:
+  model_type: LogisticRegression
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: PolynomialSVCClassifier
+type: classifier
+estimator:
+  model_type: SVC
+  params:
+    kernel: poly
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: Predictions
+type: predictions
+predictions:
+  - model: SupportVectorClassifier
+  - model: GridSearchCV
+  - model: LogisticRegressionClassifier
+  - model: PolynomialSVCClassifier
+
+data_split:
+  test_size: 0.2
+  random_state: 42
+
+
+# Assignment 6
+
+- name: MultinomialNBClassifier
+type: classifier
+estimator:
+  model_type: MultinomialNB
+cross_validation:
+  method: k-fold
+  num_folds: 5
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: ComplementNBClassifier
+type: classifier
+estimator:
+  model_type: ComplementNB
+cross_validation:
+  method: k-fold
+  num_folds: 5
+fit:
+  - dataset: X_train
+  - labels: y_train
+
+- name: CategoricalNBClassifier
+type: classifier
+estimator:
+  model_type: CategoricalNB
+cross_validation:
+  method: k-fold
+  num_folds: 2
+fit:
+  - dataset: X_train_1
+  - labels: y_train_1
+
+- name: Predictions
+type: predictions
+predictions:
+  - model: MultinomialNBClassifier
+  - model: ComplementNBClassifier
+  - model: CategoricalNBClassifier
+
+data_split:
+  test_size: 0.2
+  random_state: 42
+
+
+# Assignment 7 
+
+bagging_tree:
+  classifier: BaggingClassifier
+  base_estimator: DecisionTreeClassifier
+  n_estimators: 1500
+  random_state: 42
+
+bagging_knn:
+  classifier: BaggingClassifier
+  base_estimator: KNeighborsClassifier
+  n_estimators: 1500
+  random_state: 42
+
+bagging_svm:
+  classifier: BaggingClassifier
+  base_estimator: SVC
+  n_estimators: 1500
+  random_state: 42
+
+rf_clf:
+  classifier: RandomForestClassifier
+  random_state: 42
+  n_estimators: 1000
+
+ex_tree_clf:
+  classifier: ExtraTreesClassifier
+  n_estimators: 1000
+  max_features: 7
+  random_state: 42
+
+ada_boost_clf:
+  classifier: AdaBoostClassifier
+  n_estimators: 30
+
+grad_boost_clf:
+  classifier: GradientBoostingClassifier
+  n_estimators: 100
+  random_state: 42
+
+stacking:
+  classifiers:
+    - LogisticRegression:
+        solver: liblinear
+    - DecisionTreeClassifier: {}
+    - SVC:
+        gamma: scale
+
+data_split:
+  test_size: 0.2
+  random_state: 42
